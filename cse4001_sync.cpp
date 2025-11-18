@@ -54,6 +54,32 @@ private:
     sem_t mSemaphore;
 };
 
+class Lightswitch {
+private:
+    int counter;
+    Semaphore mutex;
+
+public:
+    Lightswitch(): counter(0), mutex(1) {}
+
+    void lock(Semaphore &semaphore) {
+        mutex.wait();
+        counter++;
+        if (counter == 1) {
+            semaphore.wait();
+        }
+        mutex.signal();
+    }
+
+    void unlock(Semaphore &semaphore) {
+        mutex.wait();
+        counter --;
+        if (counter == 0) {
+            semaphore.signal();
+        }
+        mutex.signal();
+    }
+};
 
 
 
@@ -62,13 +88,45 @@ const int bufferSize = 5;
 const int numConsumers = 3; 
 const int numProducers = 3; 
 
-/* semaphores are declared global so they can be accessed
- in main() and in thread routine. */
+// Example globals
 Semaphore Mutex(1);
 Semaphore Spaces(bufferSize);
-Semaphore Items(0);             
+Semaphore Items(0);
 
+// Problem 1 globals
+Lightswitch readSwitch;
+Semaphore roomEmpty(1);
+Semaphore turnstile(1);
 
+void *Writer1 (void *threadID) {
+
+    int x = (long)threadID;
+
+    while (1) {
+        sleep(3);
+        turnstile.wait();
+        roomEmpty.wait();
+            printf("Reader %d: Reading.\n", x);
+            fflush(stdout);
+        turnstile.signal();
+        roomEmpty.signal();
+    }
+}
+
+void *Reader1 (void *threadID) {
+
+    int x = (long)threadID;
+
+    while (1) {
+        turnstile.wait();
+        turnstile.signal();
+        readSwitch.lock(roomEmpty);
+            printf("Writer %d: Writing.\n", x);
+            fflush(stdout);
+        readSwitch.unlock(roomEmpty);
+        sleep(5);
+    }
+}
 
 /*
     Producer function 
@@ -112,9 +170,7 @@ void *Consumer ( void *threadID )
 
 }
 
-
-int main(int argc, char **argv )
-{
+void problem0() {
     pthread_t producerThread[ numProducers ];
     pthread_t consumerThread[ numConsumers ];
 
@@ -149,11 +205,60 @@ int main(int argc, char **argv )
     // should terminate by calling pthread_exit() rather than exit(3). 
     pthread_exit(NULL); 
 
+}
 
-} /* main() */
+void problem1() {
+    pthread_t writerThread[5];
+    pthread_t readerThread[5];
+
+    // Create the writers
+    for( long p = 0; p < 5; p++ )
+    {
+        int rc = pthread_create ( &writerThread[ p ], NULL, 
+                                  Writer1, (void *) (p+1) );
+        if (rc) {
+            printf("ERROR creating writer thread # %d; \
+                    return code from pthread_create() is %d\n", p, rc);
+            exit(-1);
+        }
+    }
+
+    // Create the readers
+    for( long c = 0; c < 5; c++ )
+    {
+        int rc = pthread_create ( &readerThread[ c ], NULL, 
+                                  Reader1, (void *) (c+1) );
+        if (rc) {
+            printf("ERROR creating reader thread # %d; \
+                    return code from pthread_create() is %d\n", c, rc);
+            exit(-1);
+        }
+    }
+
+    //printf("Main: program completed. Exiting.\n");
 
 
+    // To allow other threads to continue execution, the main thread 
+    // should terminate by calling pthread_exit() rather than exit(3). 
+    pthread_exit(NULL); 
+}
 
 
+int main(int argc, char **argv )
+{
+    if (argc < 2) {
+        cout << "Usage: " << argv[0] << " <number>" << endl;
+        return 1;
+    }
 
+    int choice = atoi(argv[1]);
 
+    switch(choice) {
+        case 0:
+            problem0();
+            break;
+        case 1:
+            problem1();
+            break;
+    }
+}
