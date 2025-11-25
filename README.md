@@ -9,5 +9,7 @@ The no-starve readers-writers solution utilizes a switch and turnstile to allow 
 In some cases, it may be desireable to give priority to the readers so they can make updates and prevent readers from accessing old data. To create the writer priority, two switches are utilized: one for the readers and one for the writers. When a writer is in the critical section, it allows only other writers to queue which gives them priority.
 
 ## Problem 3
+![Problem 3 terminal output](Screenshot%202025-11-24%20194739.png)
+Allowing one less philosopher than the amount of forks at the table will ensure that there is never a deadlock. To simulate this, a "footman" semaphore is created to ensure that a philosopher can't ever wait on a fork if four poeple are already at the table. Due to the footman, this solution also prevents starvation.
 
 ## Problem 4
