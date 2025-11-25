@@ -10,6 +10,8 @@ In some cases, it may be desireable to give priority to the readers so they can 
 
 ## Problem 3
 ![Problem 3 terminal output](Screenshot%202025-11-24%20194739.png)
-Allowing one less philosopher than the amount of forks at the table will ensure that there is never a deadlock. To simulate this, a "footman" semaphore is created to ensure that a philosopher can't ever wait on a fork if four poeple are already at the table. Due to the footman, this solution also prevents starvation.
+Allowing one less philosopher than the amount of forks at the table will validate that there is never a deadlock. To simulate this, a "footman" semaphore is created to ensure that a philosopher can't ever wait on a fork if four poeple are already at the table. Due to the footman, this solution also prevents starvation.
 
 ## Problem 4
+![Problem 4 terminal output](Screenshot%202025-11-24%20203414.png)
+The other way to ensure that there is never a deadlock in the dining philosophers problem is to force there to be at least one leftie and at least one rightie at the table. In my implementation, all even philosophers are righties and the odd philosophers are lefties. This solution also prevents starvation.
